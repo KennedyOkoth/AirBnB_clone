@@ -1,6 +1,6 @@
 # Project: 0x00. AirBnB clone - The console
 
-![Image](https://s3.amazonaws.com/alx-intranet.hbtn.io/uploads/medias/2018/6/65f4a1dd9c51265f49d0.png)
+![hbnb](https://user-images.githubusercontent.com/88311316/151070609-19608294-829e-408b-b2b3-5d1f2873f1e3.png)
 
 ## Resources
 
