@@ -16,6 +16,7 @@ The first key element is manipulating a powerful storage system. This storage en
 This abstraction also offers the flexibility to change the type of storage easily without the need to update your entire codebase.
 
 The console serves as a valuable tool for validating and working with this storage engine.
+![Architecture](https://s3.amazonaws.com/alx-intranet.hbtn.io/uploads/medias/2018/6/815046647d23428a14ca.png)
 
 
 ## Resources
