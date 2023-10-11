@@ -2,6 +2,22 @@
 
 ![hbnb](https://user-images.githubusercontent.com/88311316/151070609-19608294-829e-408b-b2b3-5d1f2873f1e3.png)
 
+## Description of the project
+# Introduction to the Console
+
+The console:
+
+- Creates your data model
+- Manages (creates, updates, destroys, etc.) objects via a console/command interpreter
+- Stores and persists objects to a file (JSON file)
+
+The first key element is manipulating a powerful storage system. This storage engine provides an abstraction layer between your "My object" and how they are stored and persisted. In practical terms, this means that you can interact with your objects from your console code (the command interpreter itself) and from the front-end and RestAPI that you'll build later without worrying about the specifics of how your objects are stored.
+
+This abstraction also offers the flexibility to change the type of storage easily without the need to update your entire codebase.
+
+The console serves as a valuable tool for validating and working with this storage engine.
+
+
 ## Resources
 
 #### Read or watch:
