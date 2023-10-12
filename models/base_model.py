@@ -20,24 +20,18 @@ class BaseModel:
         """
         Initialize attributes: uuid4, dates when class was created/updated
         """
-        date_format = '%Y-%m-%dT%H:%M:%S.%f'
-        if kwargs:
+        if len(kwargs) > 0:
             for key, value in kwargs.items():
-                if key == "__class__":
-                    pass
-                elif "created_at" == key:
-                    self.created_at = datetime.strptime(kwargs["created_at"],
-                                                        date_format)
-                elif "updated_at" == key:
-                    self.updated_at = datetime.strptime(kwargs["updated_at"],
-                                                        date_format)
-                else:
-                    setattr(self, key, value)
-        else:
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now().isoformat()
-            self.updated_at = self.created_at
-            models.storage.new(self)
+                if key == '__class__':
+                    continue
+                if key == "created_at" or key == "updated_at":
+                    value = datetime.fromisoformat
+                setattr(self, key, value)
+                
+        self.id = str(uuid.uuid4())
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+        models.storage.new(self)
 
     def __str__(self):
         """
@@ -59,8 +53,8 @@ class BaseModel:
         """
         Return dictionary of BaseModel with string formats of times
         """
-        obj_dict = self.__dict__
+        obj_dict = {**self.__dict__}
         obj_dict["__class__"] = type(self).__name__
-        obj_dict["created_at"] = self.created_at
-        obj_dict["updated_at"] = self.updated_at
+        obj_dict["created_at"] = obj_dict['created_at'].isoformat()
+        obj_dict["updated_at"] = obj_dict['updated_at'].isoformat()
         return obj_dict

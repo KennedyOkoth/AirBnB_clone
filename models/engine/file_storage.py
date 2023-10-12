@@ -2,6 +2,7 @@
 """
 AirBnB clone project File Storage
 """
+import os
 import json
 from models.base_model import BaseModel
 
@@ -21,30 +22,49 @@ class FileStorage:
 
     __file_path = "file.json"
     __objects = {}
-    class_dict = {"BaseModel": BaseModel}
 
     def all(self):
-        return self.__objects
+        """
+        Returns the dictionary __objects
+        """
+        return FileStorage.__objects
 
     def new(self, obj):
-        if obj:
-            key = "{}.{}".format(obj.__class__.__name__, obj.id)
-            self.__objects[key] = obj
+        """
+        Sets in __objects the obj with key <obj class name>.id
+        """
+        key = "{}.{}".format(type(obj).__name__, obj.id)
+        FileStorage.__objects[key] = obj
 
     def save(self):
-        serialized_objects = {}
-        for key, obj in self.__objects.items():
-            serialized_objects[key] = obj.to_dict()
-
-        with open(self.__file_path, "w", encoding="UTF-8") as file:
-            json.dump(serialized_objects, file)
+        """
+        Serializes __objects to the JSON file (path: __file_path)
+        """
+        with open(FileStorage.__file_path, "w", encoding="UTF-8") as file:
+            json.dump({k: v.to_dict() for k, v in
+                       FileStorage.__objects.items()}, file)
 
     def reload(self):
-        try:
-            with open(self.__file_path, "r", encoding="UTF-8") as file:
-                new_dict_obj = json.load(file)
-            for key, value in new_dict_obj.items():
-                obj = self.class_dict[value["__class__"]](**value)
-                self.__objects[key] = obj
-        except FileNotFoundError:
-            pass
+        """
+        Deserializes the JSON file to __objects only if the JSON
+        file exists; otherwise, does nothing
+        """
+        class_dict = {"BaseModel": BaseModel}
+        if not os.path.exists(FileStorage.__file_path):
+            return
+
+        with open(FileStorage.__file_path, "r") as f:
+            deserialized = None
+
+            try:
+                deserialized = json.load(f)
+            except json.JSONDecodeError:
+                pass
+
+            if deserialized is None:
+                return
+
+            FileStorage.__objects = {
+                k: class_dict[k.split(".")[0]](**v) for k, v in
+                deserialized.items()
+            }
