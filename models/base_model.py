@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """
 This is our base model
 takes in public instances attributes id,created_at
