@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 This is our base model
 takes in public instances attributes id,created_at
@@ -6,7 +6,7 @@ and updated at.
 """
 from uuid import uuid4
 from datetime import datetime
-from models import storage
+import models
 
 
 class BaseModel:
@@ -16,43 +16,43 @@ class BaseModel:
     """
 
     def __init__(self, *args, **kwargs):
-        """initialize an instance"""
-
+        """
+        Constructor method that initializes the instance
+        """
         if kwargs:
-            for attr, value in kwargs.items():
-                if attr == "created_at" or attr == "updated_at":
-                    setattr(self, attr, datetime.fromisoformat(value))
-                    continue
+            for key, value in kwargs.items():
+                if key == "created_at" or key == "updated_at":
+                    setattr(self, key, datetime.strptime(
+                        value, "%Y-%m-%dT%H:%M:%S.%f"))
+                elif key != "__class__":
+                    setattr(self, key, value)
+            else:
+                self.id = str(uuid4())
+                self.created_at = self.updated_at = datetime.now()
+                models.storage.new(self)
 
-                if attr != "__class__":
-                    setattr(self, attr, value)
-
-        else:
-            self.id = str(uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            storage.new(self)
+    def __str__(self):
+        """
+        Returns a string representation of the instance
+        """
+        return "[{}] ({}) {}".format(
+            self.__class__.__name__, self.id, self.__dict__)
 
     def save(self):
         """
-        update the public instance attribute updated_at everytime the object
-        is changed
+        Updates the public instance attribute updated_at with the current
+        datetime
         """
         self.updated_at = datetime.now()
-        storage.save()
-
-    def __str__(self):
-        return "[{}] ({}) {}".format(
-            type(self).__name__, self.id, self.__dict__)
+        models.storage.save()
 
     def to_dict(self):
-        """create a copy of instance attributes and add class name"""
-        obj_dict = self.__dict__.copy()
-        obj_dict["__class__"] = self.__class__.__name__
-
-        # Convert created_at and updated_at to ISO format strings
-        for attr, value in obj_dict.items():
-            if isinstance(value, datetime):
-                obj_dict[attr] = value.isoformat()
-
-        return obj_dict
+        """
+        Returns a dictionary containing all keys/values of __dict__ of
+        the instance
+        """
+        new_dict = self.__dict__.copy()
+        new_dict["__class__"] = self.__class__.__name__
+        new_dict["created_at"] = self.created_at.isoformat()
+        new_dict["updated_at"] = self.updated_at.isoformat()
+        return new_dict
