@@ -6,7 +6,7 @@ and updated at.
 """
 import uuid
 from datetime import datetime
-import models
+from models import storage
 
 """
 Parent class to all the classes in AirBnB lone project
@@ -26,18 +26,20 @@ class BaseModel:
         """
         Initialize attributes: uuid4, dates when class was created/updated
         """
-        if len(kwargs) > 0:
-            for key, value in kwargs.items():
-                if key == "__class__":
+        if kwargs:
+            for attr, value in kwargs.items():
+                if attr == "created_at" or attr == "updated_at":
+                    setattr(self, attr, datetime.fromisoformat(value))
                     continue
-                if key == "created_at" or key == "updated_at":
-                    value = datetime.fromisoformat
-                setattr(self, key, value)
 
-        self.id = str(uuid.uuid4())
-        self.created_at = datetime.now()
-        self.updated_at = datetime.now()
-        models.storage.new(self)
+                if attr != "__class__":
+                    setattr(self, attr, value)
+
+        else:
+            self.id = str(uuid.uuid4())
+            self.created_at = datetime.now()
+            self.updated_at = datetime.now()
+            storage.new(self)
 
     def __str__(self):
         """
@@ -53,7 +55,7 @@ class BaseModel:
         - save to serialized file
         """
         self.updated_at = datetime.now()
-        models.storage.save()
+        storage.save()
 
     def to_dict(self):
         """

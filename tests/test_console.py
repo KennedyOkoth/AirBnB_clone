@@ -83,7 +83,8 @@ class TestHBNBCommand(unittest.TestCase):
         Test the update command.
         """
         with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd('update BaseModel 1234-5678-9012 name "John Doe"')
+            HBNBCommand().onecmd(
+                'update BaseModel 1234-5678-9012 name "John Doe"')
             output = f.getvalue().strip()
             self.assertEqual(output, "** no instance found **")
 
@@ -95,7 +96,8 @@ class TestHBNBCommand(unittest.TestCase):
             HBNBCommand().onecmd("help")
             output = f.getvalue().strip()
             self.assertIn("Documented commands", output)
-            self.assertIn("EOF  all  create  destroy  help  quit  show  update", output)
+            self.assertIn(
+                "EOF  all  create  destroy  help  quit  show update", output)
 
     def test_create_missing_class_name(self):
         """
