@@ -8,10 +8,6 @@ import uuid
 from datetime import datetime
 from models import storage
 
-"""
-Parent class to all the classes in AirBnB lone project
-"""
-
 
 class BaseModel:
     """Parent class for AirBnB clone project
@@ -27,25 +23,24 @@ class BaseModel:
         Initialize attributes: uuid4, dates when class was created/updated
         """
         if kwargs:
-            for attr, value in kwargs.items():
-                if attr == "created_at" or attr == "updated_at":
-                    setattr(self, attr, datetime.fromisoformat(value))
+            for key, value in kwargs.items():
+                if key == "__class__":
                     continue
 
-                if attr != "__class__":
-                    setattr(self, attr, value)
-
+                if key in ["created_at", "updated_at"]:
+                    setattr(self, key,
+                            datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f"))
         else:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
-            self.updated_at = datetime.now()
+            self.updated_at = self.created_at
             storage.new(self)
 
     def __str__(self):
         """
         Return class name, id, and the dictionary
         """
-        return f"{type(self).__name__} {self.id} {self.__dict__}"
+        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
 
     def save(self):
         """
@@ -61,8 +56,8 @@ class BaseModel:
         """
         Return dictionary of BaseModel with string formats of times
         """
-        obj_dict = {**self.__dict__}
-        obj_dict["__class__"] = type(self).__name__
-        obj_dict["created_at"] = obj_dict["created_at"].isoformat()
-        obj_dict["updated_at"] = obj_dict["updated_at"].isoformat()
+        obj_dict = self.__dict__.copy()
+        obj_dict["__class__"] = self.__class__.__name__
+        obj_dict["created_at"] = self.created_at.isoformat()
+        obj_dict["updated_at"] = self.updated_at.isoformat()
         return obj_dict
