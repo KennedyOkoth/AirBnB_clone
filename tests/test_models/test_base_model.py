@@ -54,7 +54,8 @@ class TestBaseModel(unittest.TestCase):
         # """Convert the model to a dictionary"""
         model_dict = model.to_dict()
 
-        # Check that created_at and updated_at are moved from iSO format to strings
+        # Check that created_at and updated_at are moved from iSO
+        # format to strings
         self.assertIsInstance(model_dict["created_at"], str)
         self.assertIsInstance(model_dict["updated_at"], str)
 
