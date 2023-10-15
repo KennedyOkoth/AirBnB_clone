@@ -1,4 +1,9 @@
 #!/usr/bin/python3
+"""
+This is my base model
+takes in public instances attributes id,created_at
+and updated at.
+"""
 import uuid
 from datetime import datetime
 import models
@@ -16,18 +21,19 @@ class BaseModel:
             save(self)
             to_dict(self)
     """
+
     def __init__(self, *args, **kwargs):
         """
         Initialize attributes: uuid4, dates when class was created/updated
         """
         if len(kwargs) > 0:
             for key, value in kwargs.items():
-                if key == '__class__':
+                if key == "__class__":
                     continue
                 if key == "created_at" or key == "updated_at":
                     value = datetime.fromisoformat
                 setattr(self, key, value)
-                
+
         self.id = str(uuid.uuid4())
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
@@ -55,6 +61,6 @@ class BaseModel:
         """
         obj_dict = {**self.__dict__}
         obj_dict["__class__"] = type(self).__name__
-        obj_dict["created_at"] = obj_dict['created_at'].isoformat()
-        obj_dict["updated_at"] = obj_dict['updated_at'].isoformat()
+        obj_dict["created_at"] = obj_dict["created_at"].isoformat()
+        obj_dict["updated_at"] = obj_dict["updated_at"].isoformat()
         return obj_dict
