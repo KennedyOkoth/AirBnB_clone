@@ -1,98 +1,130 @@
-#!/usr/bin/env python3
-"""This test module defines tests for file_storage.py"""
+#!/usr/bin/python3
+"""Module test_file_storage
 
+This Module contains a tests for FileStorage Class
+"""
+
+import inspect
+import json
 import os
 import unittest
-import json
-from models.engine.file_storage import FileStorage
-from models.base_model import BaseModel
+
+import pycodestyle
+from models.engine import file_storage
+from tests.test_models.test_base_model import BaseModel
+
+FileStorage = file_storage.FileStorage
+
+
+class TestFileStorageDocsAndStyle(unittest.TestCase):
+    """Tests FileStorage class for documentation and style conformance"""
+
+    def test_pycodestyle(self):
+        """Tests compliance with pycodestyle"""
+        style = pycodestyle.StyleGuide(quiet=False)
+        result = style.check_files(
+            [
+                "models/engine/file_storage.py",
+                "tests/test_models/test_engine/test_file_storage.py",
+            ]
+        )
+        self.assertEqual(result.total_errors, 0)
+
+    def test_module_docstring(self):
+        """Tests whether the module is documented"""
+        self.assertTrue(len(file_storage.__doc__) >= 1)
+
+    def test_class_docstring(self):
+        """Tests whether the class is documented"""
+        self.assertTrue(len(FileStorage.__doc__) >= 1)
+
+    def test_methods_docstring(self):
+        """Tests whether the class methods are documented"""
+        funcs = inspect.getmembers(FileStorage, inspect.isfunction)
+        for func in funcs:
+            self.assertTrue(len(func[1].__doc__) >= 1)
+
+    def test_class_name(self):
+        """Test whether the class name is correct"""
+        self.assertEqual(FileStorage.__name__, "FileStorage")
 
 
 class TestFileStorage(unittest.TestCase):
+    """Test cases for FileStorage Class"""
+
     def setUp(self):
-        """Instance of FileStorage used in testing"""
-        # Create a new instance of FileStorage for each test case
-        self.file_storage = FileStorage()
+        """initial configuration for tests"""
+        self.file_path = "file.json"
+        with open(self.file_path, "w") as f:
+            json.dump({}, f)
+        self.storage = FileStorage()
+        self.storage.reload()
 
-    def test_init(self):
-        """check if object is empty and __file_path is set to the correct value"""
-        # Test that __objects is an empty dictionary
-        self.assertEqual(self.file_storage._FileStorage__objects, {})
+    def tearDown(self):
+        """cleanup test files"""
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
 
-        # Test that __file_path is set to the correct default value
-        self.assertEqual(self.file_storage._FileStorage__file_path, "file.json")
+    def test_all_returns_a_dictionary(self):
+        """tests wether the instance method 'all' returns a valid dictionary"""
+        self.assertIsInstance(self.storage.all(), dict)
 
-    def test_all(self):
-        """confirm all() works when empty and after objects are added"""
-        # Test that all() returns an empty dictionary initially
-        self.assertEqual(self.file_storage.all(), {})
+    def test_new_adds_instance_obj_to_dict_of_objects(self):
+        """tests wether the instance method 'new' adds new object"""
+        temp_obj = BaseModel()
+        self.storage.new(temp_obj)
+        key = f"{temp_obj.__class__.__name__}.{temp_obj.id}"
+        self.assertIn(key, self.storage.all().keys())
 
-        # Add some objects and verify that all() returns the correct dictionary
-        obj1 = BaseModel()
-        obj2 = BaseModel()
-        self.file_storage.new(obj1)
-        self.file_storage.new(obj2)
-        expected_dict = {
-            "BaseModel." + obj1.id: obj1.to_dict(),
-            "BaseModel." + obj2.id: obj2.to_dict(),
-        }
-        self.assertEqual(self.file_storage.all(), expected_dict)
+    def test_save_method_saves_objects_to_file(self):
+        """tests wether the save method saves objects to file"""
+        expected_objects = {}
+        for _ in range(4):
+            bs_mdl = BaseModel()
+            self.storage.new(bs_mdl)
+            key = f"{bs_mdl.__class__.__name__}.{bs_mdl.id}"
+            expected_objects[key] = bs_mdl.to_dict()
 
-    def test_new(self):
-        """check that the new method adds to __objects"""
-        # Create a test object and add it using the new() method
-        obj = BaseModel()
-        self.file_storage.new(obj)
+        self.storage.save()
 
-        # Verify that the object is added to __objects with the correct key
-        expected_key = "BaseModel." + obj.id
-        self.assertIn(expected_key, self.file_storage._FileStorage__objects)
-        self.assertEqual(
-            self.file_storage._FileStorage__objects[expected_key], obj.to_dict()
-        )
+        self.assertTrue(os.path.exists(self.file_path))
+        self.assertGreater(os.path.getsize(self.file_path), 0)
+        with open(self.file_path, "r") as f:
+            objects = {k: v for k, v in json.load(f).items()}
 
-    def test_save(self):
-        """check the save method saves contents to the json file correctly"""
-        # Add some objects to __objects
-        obj1 = BaseModel()
-        obj2 = BaseModel()
-        self.file_storage.new(obj1)
-        self.file_storage.new(obj2)
+        self.assertDictEqual(expected_objects, objects)
 
-        # Save the objects to the JSON file
-        self.file_storage.save()
+    def test_reload_method_reloads_saved_objects(self):
+        """test wether the reload method correctly loads objects from file"""
+        expected_objects = {}
+        for _ in range(4):
+            bs_mdl = BaseModel()
+            self.storage.new(bs_mdl)
+            key = f"{bs_mdl.__class__.__name__}.{bs_mdl.id}"
+            expected_objects[key] = bs_mdl.to_dict()
 
-        # Verify that the JSON file exists
-        self.assertTrue(os.path.exists("file.json"))
+        self.storage.save()
+        self.storage.reload()
+        saved_objects = self.storage.all()
 
-        # Verify that the contents of the JSON file are correct
-        with open("file.json", "r") as f:
-            data = json.load(f)
-            expected_data = {
-                "BaseModel." + obj1.id: obj1.to_dict(),
-                "BaseModel." + obj2.id: obj2.to_dict(),
-            }
-            self.assertEqual(data, expected_data)
+        saved_objects_dict = {k: v.to_dict() for k, v in saved_objects.items()}
+        self.assertEqual(expected_objects, saved_objects_dict)
 
-    def test_reload(self):
-        """check reload method reloads the contents of a json file correctly"""
-        # Create a JSON file with some objects
-        data = {
-            "BaseModel.123": {"id": "123", "name": "object1"},
-            "BaseModel.456": {"id": "456", "name": "object2"},
-        }
-        with open("file.json", "w") as f:
-            json.dump(data, f)
+    def test_reload_method_does_not_do_anything_for_non_existent_file(self):
+        """reload does not do anything if the file does not exist"""
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
 
-        # Reset __objects to an empty dictionary
-        self.file_storage._FileStorage__objects = {}
+        expected_objects = {}
+        for _ in range(4):
+            bs_mdl = BaseModel()
+            self.storage.new(bs_mdl)
+            key = f"{bs_mdl.__class__.__name__}.{bs_mdl.id}"
+            expected_objects[key] = bs_mdl.to_dict()
 
-        # Call reload() to load objects from the JSON file
-        self.file_storage.reload()
+        self.storage.reload()
+        existing_objects = self.storage.all()
 
-        # Verify that __objects contains the correct objects
-        self.assertEqual(self.file_storage._FileStorage__objects, data)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        existing_objects_dict = {k: v.to_dict()
+                                 for k, v in existing_objects.items()}
+        self.assertEqual(expected_objects, existing_objects_dict)

@@ -1,58 +1,57 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
+"""Module base_model
+
+This Module contains a definition for BaseModel Class
 """
-This is our base model
-takes in public instances attributes id,created_at
-and updated at.
-"""
-from uuid import uuid4
+
+import uuid
 from datetime import datetime
+
 import models
 
 
 class BaseModel:
-    """
-    BaseModel describes public instance attributes id,
-    created_at and updated at
-    """
+    """BaseModel Class"""
 
     def __init__(self, *args, **kwargs):
-        """
-        Constructor method that initializes the instance
-        """
-        if kwargs:
-            for key, value in kwargs.items():
-                if key == "created_at" or key == "updated_at":
-                    setattr(self, key, datetime.strptime(
-                        value, "%Y-%m-%dT%H:%M:%S.%f"))
-                elif key != "__class__":
-                    setattr(self, key, value)
-            else:
-                self.id = str(uuid4())
-                self.created_at = self.updated_at = datetime.now()
-                models.storage.new(self)
+        """__init__ method & instantiation of class Basemodel
 
-    def __str__(self):
+        Args:
+            *args.
+            **kwargs (dict): Key/value pairs
         """
-        Returns a string representation of the instance
-        """
-        return "[{}] ({}) {}".format(
-            self.__class__.__name__, self.id, self.__dict__)
+        self.id = str(uuid.uuid4())
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+
+        if kwargs is not None and len(kwargs) > 0:
+            for k, v in kwargs.items():
+                if k == "__class__":
+                    continue
+                elif k in ["created_at", "updated_at"]:
+                    setattr(self, k, datetime.fromisoformat(v))
+                else:
+                    setattr(self, k, v)
+        else:
+            models.storage.new(self)
 
     def save(self):
-        """
-        Updates the public instance attribute updated_at with the current
-        datetime
-        """
+        """Update updated_at with the current datetime."""
         self.updated_at = datetime.now()
         models.storage.save()
 
     def to_dict(self):
         """
-        Returns a dictionary containing all keys/values of __dict__ of
-        the instance
+        returns a dictionary containing all
+        keys/values of __dict__ of the instance
         """
-        new_dict = self.__dict__.copy()
-        new_dict["__class__"] = self.__class__.__name__
-        new_dict["created_at"] = self.created_at.isoformat()
-        new_dict["updated_at"] = self.updated_at.isoformat()
-        return new_dict
+        bs_dict = {
+            k: (v.isoformat() if isinstance(v, datetime) else v)
+            for (k, v) in self.__dict__.items()
+        }
+        bs_dict["__class__"] = self.__class__.__name__
+        return bs_dict
+
+    def __str__(self) -> str:
+        """should print/str representation of the BaseModel instance."""
+        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"

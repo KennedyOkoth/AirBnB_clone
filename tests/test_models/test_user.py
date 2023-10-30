@@ -1,77 +1,118 @@
 #!/usr/bin/python3
-"""This test module defines tests for user.py"""
+"""Module test_user
 
+This Module contains a tests for User Class
+"""
+
+import inspect
+import sys
 import unittest
-from models.user import User
-from models import storage
+from datetime import datetime
+from io import StringIO
+
+import pycodestyle
+from models import user
+from tests.test_models.test_base_model import BaseModel
+
+User = user.User
+
+
+class TestUserDocsAndStyle(unittest.TestCase):
+    """Tests User class for documentation and style conformance"""
+
+    def test_pycodestyle(self):
+        """Tests compliance with pycodestyle"""
+        style = pycodestyle.StyleGuide(quiet=False)
+        result = style.check_files(["models/user.py",
+                                    "tests/test_models/test_user.py"])
+        self.assertEqual(result.total_errors, 0)
+
+    def test_module_docstring(self):
+        """Tests whether the module is documented"""
+        self.assertTrue(len(user.__doc__) >= 1)
+
+    def test_class_docstring(self):
+        """Tests whether the class is documented"""
+        self.assertTrue(len(User.__doc__) >= 1)
+
+    def test_class_name(self):
+        """Test whether the class name is correct"""
+        self.assertEqual(User.__name__, "User")
 
 
 class TestUser(unittest.TestCase):
-    """test user class"""
+    """Test cases for User Class"""
 
     def setUp(self):
-        """set up User class"""
-        self.user = User()
+        """creates a test object for other tests"""
+        self.test_obj = User()
+        self.test_obj.email = "test@example.com"
+        self.test_obj.password = "p@$$w0rd"
+        self.test_obj.first_name = "John"
+        self.test_obj.last_name = "Doe"
 
-    def test_initialize(self):
-        """initialize User class"""
-        self.assertEqual(self.user.email, "")
-        self.assertEqual(self.user.password, "")
-        self.assertEqual(self.user.first_name, "")
-        self.assertEqual(self.user.last_name, "")
+    def test_user_is_subclass_of_base_model(self):
+        self.assertTrue(issubclass(User, BaseModel))
 
-    def test_user_attributes(self):
-        """test attribute setup"""
-        user = User()
-        self.assertEqual(user.email, "")
-        self.assertEqual(user.password, "")
-        self.assertEqual(user.first_name, "")
-        self.assertEqual(user.last_name, "")
+    def test_public_attributes_exist(self):
+        """tests wether the public instance attributes exist."""
+        req_att = [
+            "id",
+            "created_at",
+            "updated_at",
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+        ]
+        for attrib in req_att:
+            self.assertTrue(hasattr(self.test_obj, attrib))
 
-    def test_user_creation(self):
-        """set values for attributes"""
-        user = User(
-            email="test@example.com",
-            password="password",
-            first_name="John",
-            last_name="Doe",
-        )
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.password, "password")
-        self.assertEqual(user.first_name, "John")
-        self.assertEqual(user.last_name, "Doe")
+    def test_public_attributes_have_correct_type(self):
+        """tests wether the public instance attributes exist."""
+        req_att = ["email", "password", "first_name", "last_name"]
+        for attrib in req_att:
+            self.assertTrue(type(getattr(self.test_obj, attrib)), str)
 
-    def test_user_to_dict(self):
-        """set dictionary for user"""
-        user = User(
-            email="test@example.com",
-            password="password",
-            first_name="John",
-            last_name="Doe",
-        )
-        user_dict = user.to_dict()
-        self.assertEqual(user_dict["__class__"], "User")
-        self.assertEqual(user_dict["email"], "test@example.com")
-        self.assertEqual(user_dict["password"], "password")
-        self.assertEqual(user_dict["first_name"], "John")
-        self.assertEqual(user_dict["last_name"], "Doe")
+    def test_bas_str_should_print_formatted_output(self):
+        """__str__ should print [<class name>] (<self.id>) <self.__dict__>"""
+        self.test_obj.my_number = 89
+        cls_name = User.__name__
+        id = self.test_obj.id
+        expected = f"[{cls_name}] ({id}) {self.test_obj.__dict__}"
+        output = StringIO()
+        sys.stdout = output
+        print(self.test_obj)
+        sys.stdout = sys.__stdout__
+        self.assertEqual(output.getvalue().strip("\n"), expected)
 
-    def test_user_from_dict(self):
-        """collect data from dict"""
-        user_data = {
-            "__class__": "User",
-            "id": "123",
-            "email": "test@example.com",
-            "password": "password",
-            "first_name": "John",
-            "last_name": "Doe",
-        }
-        user = User(**user_data)
-        self.assertEqual(user.id, "123")
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.password, "password")
-        self.assertEqual(user.first_name, "John")
-        self.assertEqual(user.last_name, "Doe")
+    def test_to_dict_returns_a_dictionary_of_attributes(self):
+        """to_dict should return a dictionary containing all key/value of
+        self.__dict__
+        """
+        temp_dict = self.test_obj.to_dict()
+        self.assertIsInstance(temp_dict, dict)
+        keys = temp_dict.keys()
+
+        for k, v in self.test_obj.__dict__.items():
+            self.assertIn(k, keys)
+            if not isinstance(self.test_obj.__dict__[k], datetime):
+                self.assertEqual(temp_dict[k], v)
+
+    def test_to_dict_has_a_key_with_the_class_name(self):
+        """to_dict must have a key of __class__ with a value of the classes
+        name
+        """
+        temp_dict = self.test_obj.to_dict()
+        self.assertIn("__class__", temp_dict.keys())
+        self.assertEqual(temp_dict["__class__"], User.__name__)
+
+    def test_init_with_kwargs(self):
+        """test that User can be constructed from kwargs"""
+        temp_obj_2 = User(**self.test_obj.to_dict())
+
+        for k, v in self.test_obj.__dict__.items():
+            self.assertEqual(v, temp_obj_2.__dict__[k])
 
 
 if __name__ == "__main__":

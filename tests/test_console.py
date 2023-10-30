@@ -1,203 +1,201 @@
 #!/usr/bin/python3
-"""This test module defines tests for console.py"""
+"""Module test_amenity
 
+This Module contains a tests for Amenity Class
+"""
+
+import os
 import unittest
-from unittest.mock import patch
 from io import StringIO
+from unittest.mock import patch
+
 from console import HBNBCommand
 
 
-class TestHBNBCommand(unittest.TestCase):
-    """
-    Unit tests for the HBNBCommand class
-    """
+class TestConsole(unittest.TestCase):
+    """Tests the console app"""
 
-    def tearDown(self):
-        """
-        Clean up the test environment after each test method is executed.
-        """
-        self.console = None
+    @classmethod
+    def setUpClass(cls) -> None:
+        """sets up the test console"""
+        cls.cmd = HBNBCommand()
 
-    def test_quit_command(self):
-        """
-        Test the quit command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            self.assertTrue(HBNBCommand().onecmd("quit"))
-            self.assertEqual(f.getvalue(), "")
+    @classmethod
+    def tearDownClass(cls):
+        """removes the file.json temporary file"""
+        if os.path.exists("file.json"):
+            os.remove("file.json")
 
-    def test_EOF_command(self):
-        """
-        Test the EOF command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            self.assertTrue(HBNBCommand().onecmd("EOF"))
-            self.assertEqual(f.getvalue(), "\n")
+    def test_create_prints_class_name_error(self):
+        """tests the create command class name error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create")
+            self.assertEqual("** class name missing **\n", output.getvalue())
 
-    def test_emptyline_command(self):
-        """
-        Test the emptyline command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            self.assertIsNone(HBNBCommand().onecmd(""))
-            self.assertEqual(f.getvalue(), "")
+    def test_create_prints_class_does_not_exist(self):
+        """tests the create command class not found error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BModel")
+            self.assertEqual("** class doesn't exist **\n", output.getvalue())
 
-    def test_create_command(self):
-        """
-        Test the create command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("create BaseModel")
-            output = f.getvalue().strip()
-            self.assertTrue(len(output) > 0)
+    def test_create_creates_an_object(self):
+        """tests the create creates an instance"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue()
+            self.assertNotIn(id, [None, ""])
 
-    def test_show_command(self):
-        """
-        Test the show command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("show BaseModel 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd(f"show BaseModel {id}")
+            self.assertIn(id.strip("\n"), output.getvalue())
 
-    def test_destroy_command(self):
-        """
-        Test the destroy command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy BaseModel 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_show_prints_class_name_error(self):
+        """tests the show command class name error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("show")
+            self.assertEqual("** class name missing **\n", output.getvalue())
 
-    def test_all_command(self):
-        """
-        Test the all command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("all")
-            output = f.getvalue().strip()
-            self.assertTrue(len(output) > 0)
+    def test_show_prints_class_does_not_exist(self):
+        """tests the show command class not found error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("show BModel")
+            self.assertEqual("** class doesn't exist **\n", output.getvalue())
 
-    def test_update_command(self):
-        """
-        Test the update command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd(
-                'update BaseModel 1234-5678-9012 name "John Doe"')
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_show_displays_an_object(self):
+        """tests the show shows an instance"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f"show BaseModel {id}")
+            self.assertIn("BaseModel", output.getvalue())
 
-    def test_help(self):
-        """
-        Test the help command.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("help")
-            output = f.getvalue().strip()
-            self.assertIn("Documented commands", output)
-            self.assertIn(
-                "EOF  all  create  destroy  help  quit  show update", output)
+    def test_destroy_prints_class_name_error(self):
+        """tests the destroy command class name error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("destroy")
+            self.assertEqual("** class name missing **\n", output.getvalue())
 
-    def test_create_missing_class_name(self):
-        """
-        Test the create command with missing class name.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("create")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** class name missing **")
+    def test_destroy_prints_class_does_not_exist(self):
+        """tests the destroy command class not found error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("destroy BModel")
+            self.assertEqual("** class doesn't exist **\n", output.getvalue())
 
-    def test_show_missing_class_name(self):
-        """
-        Test the show command with missing class name.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("show")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** class name missing **")
+    def test_destroy_prints_instance_not_found(self):
+        """tests the destroy command prints instance not found error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("destroy BaseModel adfadfadf")
+            self.assertIn("** no instance found **", output.getvalue())
 
-    def test_destroy_missing_class_name(self):
-        """
-        Test the destroy command with missing class name.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** class name missing **")
+    def test_destroy_deletes_an_object(self):
+        """tests the destroy deletes a instance"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f"destroy BaseModel {id}")
+            self.cmd.onecmd(f"show BaseModel {id}")
+            self.assertIn("** no instance found **", output.getvalue())
 
-    def test_update_missing_class_name(self):
-        """
-        Test the update command with missing class name.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("update")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** class name missing **")
+    def test_all_displays_instance_objects(self):
+        """tests the all shows instance objects"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            self.cmd.onecmd("create BaseModel")
+            self.cmd.onecmd(f"all")
+            self.assertIn("BaseModel", output.getvalue())
+            self.assertGreaterEqual(output.getvalue().count("BaseModel"), 2)
 
-    def test_show_missing_instance_id(self):
-        """
-        Test the show command with missing instance id.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("show BaseModel")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** instance id missing **")
+    def test_all_displays_class_instance_objects(self):
+        """tests the all shows instance objects"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            self.cmd.onecmd("create User")
+            self.cmd.onecmd(f"all User")
+            self.assertIn("User", output.getvalue())
+            self.assertNotIn("BaseModel", output.getvalue())
 
-    def test_destroy_missing_instance_id(self):
-        """
-        Test the destroy command with missing instance id.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy BaseModel")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** instance id missing **")
+    def test_update_attr_name_missing_error(self):
+        """test update command shows attr name missing error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f"update BaseModel {id}")
+            self.assertIn("** attribute name missing **", output.getvalue())
 
-    def test_update_missing_instance_id(self):
-        """
-        Test the update command with missing instance id.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("update BaseModel")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** instance id missing **")
+    def test_update_attr_value_missing_error(self):
+        """test update command shows attr val missing error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f"update BaseModel {id} fname")
+            self.assertIn("** value missing **", output.getvalue())
 
-    def test_user_show_command(self):
-        """
-        Test the show command for User class.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("show User 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_update_updates_instance(self):
+        """test update command shows attr val missing error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create State")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f"update State {id} name example_state")
+            self.cmd.onecmd(f"show State {id}")
+            self.assertIn("name", output.getvalue())
+            self.assertIn("example_state", output.getvalue())
 
-    def test_user_destroy_command(self):
-        """
-        Test the destroy command for User class.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy User 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_classname_all_displays_instance_objects(self):
+        """tests the all shows instance objects"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            self.cmd.onecmd("create BaseModel")
+            self.cmd.onecmd("BaseModel.all()")
+            self.assertIn("BaseModel", output.getvalue())
+            self.assertGreaterEqual(output.getvalue().count("BaseModel"), 2)
 
-    def test_base_model_show_command(self):
-        """
-        Test the show command for BaseModel class.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("show BaseModel 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_classname_count_displays_instance_objects(self):
+        """tests the all shows instance objects"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create Place")
+            self.cmd.onecmd("create Place")
+            self.cmd.onecmd("create Place")
+            self.cmd.onecmd("create Place")
+            self.cmd.onecmd("create Place")
+            self.cmd.onecmd("Place.count()")
+            self.assertIn("5", output.getvalue())
 
-    def test_base_model_destroy_command(self):
-        """
-        Test the destroy command for BaseModel class.
-        """
-        with patch("sys.stdout", new=StringIO()) as f:
-            HBNBCommand().onecmd("destroy BaseModel 1234-5678-9012")
-            output = f.getvalue().strip()
-            self.assertEqual(output, "** no instance found **")
+    def test_classname_show_displays_an_object(self):
+        """tests the show shows an instance"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f'BaseModel.show("{id}")')
+            self.assertIn("BaseModel", output.getvalue())
 
+    def test_classname_destroy_deletes_an_object(self):
+        """tests the destroy deletes a instance"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create BaseModel")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f'BaseModel.destroy("{id}")')
+            self.cmd.onecmd(f"show BaseModel {id}")
+            self.assertIn("** no instance found **", output.getvalue())
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_classname_update_updates_instance(self):
+        """test update command shows attr val missing error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create Review")
+            id = output.getvalue().strip("\n")
+            self.cmd.onecmd(f'Review.update("{id}", "rev_k", "rev_v")')
+            self.cmd.onecmd(f"show Review {id}")
+            self.assertIn("rev_k", output.getvalue())
+            self.assertIn("rev_v", output.getvalue())
+
+    def test_classname_update_updates_instance_with_dict(self):
+        """test update command shows attr val missing error"""
+        with patch("sys.stdout", new=StringIO()) as output:
+            self.cmd.onecmd("create Amenity")
+            id = output.getvalue().strip("\n")
+            dict_att = "{ 'name' : 'amne', 'rev_k' : 'rev_v' }"
+            self.cmd.onecmd(f'Amenity.update("{id}", {dict_att})')
+            self.cmd.onecmd(f"show Amenity {id}")
+            self.assertIn("name", output.getvalue())
+            self.assertIn("amne", output.getvalue())
+            self.assertIn("rev_k", output.getvalue())
+            self.assertIn("rev_v", output.getvalue())

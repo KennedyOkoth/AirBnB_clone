@@ -1,37 +1,107 @@
 #!/usr/bin/python3
-"""This test module defines tests for amenity.py"""
+"""Module test_amenity
 
+This Module contains a tests for Amenity Class
+"""
+
+import sys
 import unittest
-from models.amenity import Amenity
-from models import storage
+from datetime import datetime
+from io import StringIO
+
+import pycodestyle
+from models import amenity
+from tests.test_models.test_base_model import BaseModel
+
+Amenity = amenity.Amenity
+
+
+class TestAmenityDocsAndStyle(unittest.TestCase):
+    """Tests Amenity class for documentation and style conformance"""
+
+    def test_pycodestyle(self):
+        """Tests compliance with pycodestyle"""
+        style = pycodestyle.StyleGuide(quiet=False)
+        result = style.check_files(
+            ["models/amenity.py", "tests/test_models/test_amenity.py"]
+        )
+        self.assertEqual(result.total_errors, 0)
+
+    def test_module_docstring(self):
+        """Tests whether the module is documented"""
+        self.assertTrue(len(amenity.__doc__) >= 1)
+
+    def test_class_docstring(self):
+        """Tests whether the class is documented"""
+        self.assertTrue(len(Amenity.__doc__) >= 1)
+
+    def test_class_name(self):
+        """Test whether the class name is correct"""
+        self.assertEqual(Amenity.__name__, "Amenity")
 
 
 class TestAmenity(unittest.TestCase):
-    """test amenity class"""
+    """Test cases for Amenity Class"""
 
     def setUp(self):
-        """setup amenity class"""
-        self.amenity = Amenity()
+        """creates a test object for other tests"""
+        self.test_obj = Amenity()
+        self.test_obj.name = "example"
 
-    def test_attribute_initialization(self):
-        """initialize amenity attributes"""
-        self.assertEqual(self.amenity.name, "")
+    def test_amenity_is_subclass_of_base_model(self):
+        self.assertTrue(issubclass(Amenity, BaseModel))
 
-    def test_attribute_types(self):
-        """test attribute types"""
-        self.assertIsInstance(self.amenity.name, str)
+    def test_public_attributes_exist(self):
+        """tests wether the public instance attributes exist."""
+        req_att = ["id", "created_at", "updated_at", "name"]
+        for attrib in req_att:
+            self.assertTrue(hasattr(self.test_obj, attrib))
 
-    def test_attribute_values(self):
-        """set attribute values"""
-        self.amenity.name = "WiFi"
+    def test_public_attributes_have_correct_type(self):
+        """tests wether the public instance attributes exist."""
+        req_att = ["name"]
+        for attrib in req_att:
+            self.assertTrue(type(getattr(self.test_obj, attrib)), str)
 
-        self.assertEqual(self.amenity.name, "WiFi")
+    def test_bas_str_should_print_formatted_output(self):
+        """__str__ should print [<class name>] (<self.id>) <self.__dict__>"""
+        self.test_obj.my_number = 89
+        cls_name = Amenity.__name__
+        id = self.test_obj.id
+        expected = f"[{cls_name}] ({id}) {self.test_obj.__dict__}"
+        output = StringIO()
+        sys.stdout = output
+        print(self.test_obj)
+        sys.stdout = sys.__stdout__
+        self.assertEqual(output.getvalue().strip("\n"), expected)
 
-    def test_update_attribute_values(self):
-        """update attribute values"""
-        self.amenity.name = "Security"
+    def test_to_dict_returns_a_dictionary_of_attributes(self):
+        """to_dict should return a dictionary containing all key/value of
+        self.__dict__
+        """
+        temp_dict = self.test_obj.to_dict()
+        self.assertIsInstance(temp_dict, dict)
+        keys = temp_dict.keys()
 
-        self.assertEqual(self.amenity.name, "Security")
+        for k, v in self.test_obj.__dict__.items():
+            self.assertIn(k, keys)
+            if not isinstance(self.test_obj.__dict__[k], datetime):
+                self.assertEqual(temp_dict[k], v)
+
+    def test_to_dict_has_a_key_with_the_class_name(self):
+        """to_dict must have a key of __class__ with a value of the classes
+        name
+        """
+        temp_dict = self.test_obj.to_dict()
+        self.assertIn("__class__", temp_dict.keys())
+        self.assertEqual(temp_dict["__class__"], Amenity.__name__)
+
+    def test_init_with_kwargs(self):
+        """test that Amenity can be constructed from kwargs"""
+        temp_obj_2 = Amenity(**self.test_obj.to_dict())
+
+        for k, v in self.test_obj.__dict__.items():
+            self.assertEqual(v, temp_obj_2.__dict__[k])
 
 
 if __name__ == "__main__":
