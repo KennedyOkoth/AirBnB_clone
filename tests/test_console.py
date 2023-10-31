@@ -101,7 +101,7 @@ class TestConsole(unittest.TestCase):
         with patch("sys.stdout", new=StringIO()) as output:
             self.cmd.onecmd("create BaseModel")
             self.cmd.onecmd("create BaseModel")
-            self.cmd.onecmd(f"all")
+            self.cmd.onecmd("all")
             self.assertIn("BaseModel", output.getvalue())
             self.assertGreaterEqual(output.getvalue().count("BaseModel"), 2)
 
@@ -110,7 +110,7 @@ class TestConsole(unittest.TestCase):
         with patch("sys.stdout", new=StringIO()) as output:
             self.cmd.onecmd("create BaseModel")
             self.cmd.onecmd("create User")
-            self.cmd.onecmd(f"all User")
+            self.cmd.onecmd("all User")
             self.assertIn("User", output.getvalue())
             self.assertNotIn("BaseModel", output.getvalue())
 
